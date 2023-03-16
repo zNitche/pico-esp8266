@@ -42,6 +42,13 @@ class ESP8266:
         self.cmd("AT+CWMODE=2")
         self.cmd("AT+CIPMODE=0")
 
+    def start_server(self, port):
+        self.cmd("AT+CIPMUX=1")
+
+        status, _ = self.cmd(f"AT+CIPSERVER=1,{port}")
+
+        return status
+
     def get_connected_devices(self):
         self.cmd("AT+CWLIF")
 
@@ -89,3 +96,15 @@ class ESP8266:
                     pass
 
         return status, output_data
+
+    def server_mainloop(self):
+        while True:
+            uart_row = self.uart.read()
+
+            if uart_row is not None:
+                try:
+                    row_data = uart_row.decode()
+                    print(row_data)
+
+                except:
+                    pass

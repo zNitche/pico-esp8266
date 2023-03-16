@@ -32,6 +32,14 @@ class Controller:
         if len(address_data) > 0:
             print(f"Address data: {address_data}")
 
+    def start_server(self):
+        print("Starting server at port 8080")
+
+        if self.esp.start_server(8080):
+            print("Server running...")
+
+            self.esp.server_mainloop()
+
     def mainloop(self):
         print("Starting ESP8266...")
         self.esp.startup()
@@ -39,6 +47,8 @@ class Controller:
         if self.esp.check_module():
             print("ESP8266 running...")
 
-            # self.esp_as_client()
-            self.esp_as_host()
+            self.esp_as_client()
+            # self.esp_as_host()
+
+            self.start_server()
 
