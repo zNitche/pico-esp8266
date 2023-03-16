@@ -1,5 +1,9 @@
+from controller import Controller
+
+
 def main():
-    print("Hello Pico")
+    controller = Controller()
+    controller.mainloop()
 
 
 if __name__ == '__main__':
