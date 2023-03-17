@@ -90,6 +90,24 @@ class ESP8266:
         self.start_connection_with_target(target_ip, target_port)
 
         if self.check_connection_with_target(target_ip):
+            request_header = [
+                f"POST {destination_path} HTTP/1.1",
+                f"Host: {target_ip}",
+                "Content-Type: application/json",
+                f"Content-Length: {str(len(payload))}"
+            ]
+
+            request_header = "\r\n".join(request_header)
+            request_body = f"{payload}\r\n\r\n"
+
+            request_data = f"{request_header}\r\n\r\n{request_body}"
+
+            self.send_cmd(f"AT+CIPSEND={str(len(request_data))}", ">")
+            status, data = self.send_cmd(request_data, "CLOSED")
+
+            print(f"POST DATA: {self.parse_request(data)}")
+
+        else:
             self.close_connection()
 
     def send_get(self, target_ip, destination_path, target_port):
@@ -101,7 +119,7 @@ class ESP8266:
             self.send_cmd(f"AT+CIPSEND={len(request_data)}", ">")
             status, data = self.send_cmd(request_data, "CLOSED")
 
-            print(f"GET DATA: {self.parse_get_data(data)}")
+            print(f"GET DATA: {self.parse_request(data)}")
 
         else:
             self.close_connection()
@@ -112,7 +130,7 @@ class ESP8266:
 
         return cleared_cmd_data
 
-    def parse_get_data(self, request_data):
+    def parse_request(self, request_data):
         request_content = ""
         splitted_request = request_data.split("+IPD")
 

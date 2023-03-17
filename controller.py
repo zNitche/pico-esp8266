@@ -51,4 +51,5 @@ class Controller:
             # self.start_server()
 
             self.esp.send_get("192.168.1.105", "/get", 8080)
+            self.esp.send_post(str({'key': 'value'}), "192.168.1.105", "/post", 8080)
 
