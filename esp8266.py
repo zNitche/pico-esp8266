@@ -101,7 +101,7 @@ class ESP8266:
             self.send_cmd(f"AT+CIPSEND={len(request_data)}", ">")
             status, data = self.send_cmd(request_data, "CLOSED")
 
-            print(f"GET DATA: {data}")
+            print(f"GET DATA: {self.parse_get_data(data)}")
 
         else:
             self.close_connection()
@@ -111,6 +111,20 @@ class ESP8266:
         cleared_cmd_data = " ".join([row for row in cmd_data if row != ""])
 
         return cleared_cmd_data
+
+    def parse_get_data(self, request_data):
+        request_content = ""
+        splitted_request = request_data.split("+IPD")
+
+        if len(splitted_request) > 0:
+            request_content = splitted_request[-1].replace("CLOSED\r\n", "")
+            request_content = request_content.split(":")
+
+            request_content.pop(0)
+
+            request_content = ":".join(request_content)
+
+        return request_content
 
     def send_cmd(self, cmd, ack="OK", timeout=5000):
         status = False
