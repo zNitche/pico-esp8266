@@ -87,6 +87,8 @@ class ESP8266:
         self.send_cmd("AT+CIPCLOSE")
 
     def send_post(self, payload, target_ip, destination_path, target_port):
+        response_data = ""
+
         self.start_connection_with_target(target_ip, target_port)
 
         if self.check_connection_with_target(target_ip):
@@ -105,12 +107,16 @@ class ESP8266:
             self.send_cmd(f"AT+CIPSEND={str(len(request_data))}", ">")
             status, data = self.send_cmd(request_data, "CLOSED")
 
-            print(f"POST DATA: {self.parse_request(data)}")
+            response_data = self.parse_request(data)
 
         else:
             self.close_connection()
 
+        return response_data
+
     def send_get(self, target_ip, destination_path, target_port):
+        response_data = ""
+
         self.start_connection_with_target(target_ip, target_port)
 
         if self.check_connection_with_target(target_ip):
@@ -119,10 +125,12 @@ class ESP8266:
             self.send_cmd(f"AT+CIPSEND={len(request_data)}", ">")
             status, data = self.send_cmd(request_data, "CLOSED")
 
-            print(f"GET DATA: {self.parse_request(data)}")
+            response_data = self.parse_request(data)
 
         else:
             self.close_connection()
+
+        return response_data
 
     def parse_cmd_data(self, cmd_data):
         cmd_data = cmd_data.replace("\r", "").replace("\"", "").split("\n")
