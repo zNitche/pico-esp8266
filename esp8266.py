@@ -20,61 +20,101 @@ class ESP8266:
         self.reset_pin.on()
 
     def check_module(self):
-        status, data = self.cmd("AT", "ready")
+        status, data = self.send_cmd("AT", "ready")
 
         return status
 
     def disconnect_from_network(self):
-        self.cmd("AT+CWQAP")
+        self.send_cmd("AT+CWQAP")
 
     def connect_to_network(self, ssid, password):
         self.disconnect_from_network()
 
-        self.cmd(f'AT+CWJAP="{ssid}","{password}"')
-        self.cmd("AT+CWMODE=1")
-        self.cmd("AT+CIPMODE=0")
+        self.send_cmd(f'AT+CWJAP="{ssid}","{password}"')
+        self.send_cmd("AT+CWMODE=1")
+        self.send_cmd("AT+CIPMODE=0")
 
     def init_hotspot(self, ssid, password):
         self.disconnect_from_network()
 
-        self.cmd(f'AT+CWSAP="{ssid}","{password}",1,4')
+        self.send_cmd(f'AT+CWSAP="{ssid}","{password}",1,4')
 
-        self.cmd("AT+CWMODE=2")
-        self.cmd("AT+CIPMODE=0")
+        self.send_cmd("AT+CWMODE=2")
+        self.send_cmd("AT+CIPMODE=0")
 
     def start_server(self, port):
-        self.cmd("AT+CIPMUX=1")
+        self.send_cmd("AT+CIPMUX=1")
 
-        status, _ = self.cmd(f"AT+CIPSERVER=1,{port}")
+        status, _ = self.send_cmd(f"AT+CIPSERVER=1,{port}")
 
         return status
 
     def get_connected_devices(self):
-        self.cmd("AT+CWLIF")
+        self.send_cmd("AT+CWLIF")
 
     def get_address_as_client(self):
-        status, data = self.cmd("AT+CIFSR")
+        status, data = self.send_cmd("AT+CIFSR")
 
         return self.parse_cmd_data(data)
 
     def get_address_as_host(self):
-        status, data = self.cmd("AT+CIPAP?")
+        status, data = self.send_cmd("AT+CIPAP?")
 
         return self.parse_cmd_data(data)
 
+    def is_connected_to_wifi(self):
+        connected = False
+
+        status, data = self.send_cmd("AT+CIPSTATUS")
+
+        if status:
+            parsed_cmd_data = self.parse_cmd_data(data)
+
+            if "STATUS:2" in parsed_cmd_data:
+                connected = True
+
+        return connected
+
     def check_connection_with_target(self, target_ip):
-        return self.cmd(f'AT+PING="{target_ip}"')
+        status, data = self.send_cmd(f'AT+PING="{target_ip}"')
+
+        return status
+
+    def start_connection_with_target(self, target_ip, target_port):
+        self.send_cmd(f'AT+CIPSTART="TCP","{target_ip}",{target_port}')
+
+    def close_connection(self):
+        self.send_cmd("AT+CIPCLOSE")
+
+    def send_post(self, payload, target_ip, destination_path, target_port):
+        self.start_connection_with_target(target_ip, target_port)
+
+        if self.check_connection_with_target(target_ip):
+            self.close_connection()
+
+    def send_get(self, target_ip, destination_path, target_port):
+        self.start_connection_with_target(target_ip, target_port)
+
+        if self.check_connection_with_target(target_ip):
+            request_data = f"GET {destination_path} HTTP/1.1\r\nHost: {target_ip}\r\n\r\n"
+
+            self.send_cmd(f"AT+CIPSEND={len(request_data)}", ">")
+            status, data = self.send_cmd(request_data, "CLOSED")
+
+            print(f"GET DATA: {data}")
+
+        else:
+            self.close_connection()
 
     def parse_cmd_data(self, cmd_data):
         cmd_data = cmd_data.replace("\r", "").replace("\"", "").split("\n")
-        cleared_cmd_data = [row for row in cmd_data if row != ""]
+        cleared_cmd_data = " ".join([row for row in cmd_data if row != ""])
 
         return cleared_cmd_data
 
-    def cmd(self, cmd, ack="OK", timeout=5000):
+    def send_cmd(self, cmd, ack="OK", timeout=5000):
         status = False
         output_data = ""
-
         current_time = utime.ticks_ms()
 
         self.uart.write(f"{cmd}\r\n")
@@ -85,13 +125,14 @@ class ESP8266:
             if uart_row is not None:
                 try:
                     row_data = uart_row.decode()
-                    print(row_data)
-
                     output_data += row_data
+
+                    print(uart_row)
 
                     if ack in row_data:
                         status = True
                         break
+
                 except:
                     pass
 
@@ -104,7 +145,7 @@ class ESP8266:
             if uart_row is not None:
                 try:
                     row_data = uart_row.decode()
-                    print(row_data)
+                    print(uart_row)
 
                 except:
                     pass

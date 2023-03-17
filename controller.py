@@ -18,10 +18,8 @@ class Controller:
         print(f"Connecting to network: {self.wifi_ssid}")
         self.esp.connect_to_network(self.wifi_ssid, self.wifi_password)
 
-        address_data = self.esp.get_address_as_client()
-
-        if len(address_data) > 0:
-            print(f"Address data: {address_data}")
+        if self.esp.is_connected_to_wifi():
+            print(f"Address data: {self.esp.get_address_as_client()}")
 
     def esp_as_host(self):
         print(f"Creating network: {self.hotspot_ssid}")
@@ -50,5 +48,7 @@ class Controller:
             self.esp_as_client()
             # self.esp_as_host()
 
-            self.start_server()
+            # self.start_server()
+
+            self.esp.send_get("192.168.1.105", "/get", 8080)
 
