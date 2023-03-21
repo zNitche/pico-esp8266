@@ -1,7 +1,7 @@
 import machine
 from config import Config
-import time
 import utime
+import sys
 
 
 class ESP8266:
@@ -18,7 +18,7 @@ class ESP8266:
 
         self.reset_pin.off()
 
-        time.sleep(2)
+        utime.sleep(2)
         self.reset_pin.on()
 
     def check_module(self):
@@ -186,22 +186,28 @@ class ESP8266:
                         status = True
                         break
 
-                except:
-                    pass
+                except Exception as e:
+                    self.print_debug(str(e), exception=e)
 
         return status, output_data
 
-    def server_mainloop(self):
+    def server_mainloop(self, requests_handler):
         while True:
             uart_row = self.uart.read()
 
             if uart_row is not None:
                 try:
-                    self.print_debug(self.parse_server_request(uart_row.decode()))
+                    decoded_row_data = self.parse_server_request(uart_row.decode())
+                    self.print_debug(decoded_row_data)
 
-                except:
-                    pass
+                    requests_handler(decoded_row_data)
 
-    def print_debug(self, message):
+                except Exception as e:
+                    self.print_debug(str(e), exception=e)
+
+    def print_debug(self, message, exception=None):
         if self.debug:
             print(message)
+
+            if exception:
+                sys.print_exception(exception)

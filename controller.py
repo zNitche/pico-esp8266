@@ -30,13 +30,16 @@ class Controller:
         if len(address_data) > 0:
             print(f"Address data: {address_data}")
 
+    def server_requests_handler(self, request_data):
+        pass
+
     def start_server(self):
         print("Starting server at port 8080")
 
         if self.esp.start_server(8080):
             print("Server running...")
 
-            self.esp.server_mainloop()
+            self.esp.server_mainloop(self.server_requests_handler)
 
     def send_requests(self):
         get_data = self.esp.send_get("192.168.1.105", "/get", 8080)
