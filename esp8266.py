@@ -5,11 +5,13 @@ import utime
 
 
 class ESP8266:
-    def __init__(self, uart):
+    def __init__(self, uart, debug=False):
         self.uart = uart
 
         self.state_pin = machine.Pin(Config.STATE_PIN_ID, machine.Pin.OUT)
         self.reset_pin = machine.Pin(Config.RESET_PIN_ID, machine.Pin.OUT)
+
+        self.debug = debug
 
     def startup(self):
         self.state_pin.on()
@@ -152,6 +154,17 @@ class ESP8266:
 
         return request_content
 
+    def parse_server_request(self, request_data):
+        request_content = ""
+        splitted_request = request_data.split(":")
+
+        if len(splitted_request) > 0:
+            splitted_request.pop(0)
+
+            request_content = ":".join(splitted_request)
+
+        return request_content
+
     def send_cmd(self, cmd, ack="OK", timeout=5000):
         status = False
         output_data = ""
@@ -167,7 +180,7 @@ class ESP8266:
                     row_data = uart_row.decode()
                     output_data += row_data
 
-                    print(uart_row)
+                    self.print_debug(uart_row)
 
                     if ack in row_data:
                         status = True
@@ -184,8 +197,11 @@ class ESP8266:
 
             if uart_row is not None:
                 try:
-                    row_data = uart_row.decode()
-                    print(uart_row)
+                    self.print_debug(self.parse_server_request(uart_row.decode()))
 
                 except:
                     pass
+
+    def print_debug(self, message):
+        if self.debug:
+            print(message)

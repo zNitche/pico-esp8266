@@ -6,7 +6,7 @@ from esp8266 import ESP8266
 class Controller:
     def __init__(self):
         self.uart = machine.UART(Config.UART_ID, Config.UART_BAUDRATE)
-        self.esp = ESP8266(self.uart)
+        self.esp = ESP8266(self.uart, debug=True)
 
         self.wifi_ssid = ""
         self.wifi_password = ""
@@ -38,6 +38,13 @@ class Controller:
 
             self.esp.server_mainloop()
 
+    def send_requests(self):
+        get_data = self.esp.send_get("192.168.1.105", "/get", 8080)
+        post_data = self.esp.send_post(str({'key': 'value'}), "192.168.1.105", "/post", 8080)
+
+        print(f"POST data: {post_data}")
+        print(f"GET data: {get_data}")
+
     def mainloop(self):
         print("Starting ESP8266...")
         self.esp.startup()
@@ -48,11 +55,8 @@ class Controller:
             self.esp_as_client()
             # self.esp_as_host()
 
-            # self.start_server()
+            # self.send_requests()
+            self.start_server()
 
-            get_data = self.esp.send_get("192.168.1.105", "/get", 8080)
-            post_data = self.esp.send_post(str({'key': 'value'}), "192.168.1.105", "/post", 8080)
 
-            print(f"POST data: {post_data}")
-            print(f"GET data: {get_data}")
 
