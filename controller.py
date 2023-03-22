@@ -43,7 +43,7 @@ class Controller:
 
     def send_requests(self):
         get_data = self.esp.send_get("192.168.1.105", "/get", 8080)
-        post_data = self.esp.send_post(str({'key': 'value'}), "192.168.1.105", "/post", 8080)
+        post_data = self.esp.send_post(str({'key': 'value'}), {}, "192.168.1.105", "/post", 8080)
 
         print(f"POST data: {post_data}")
         print(f"GET data: {get_data}")

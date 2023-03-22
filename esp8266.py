@@ -88,7 +88,7 @@ class ESP8266:
     def close_connection(self):
         self.send_cmd("AT+CIPCLOSE")
 
-    def send_post(self, payload, target_ip, destination_path, target_port):
+    def send_post(self, payload, headers, target_ip, destination_path, target_port):
         response_data = ""
 
         self.start_connection_with_target(target_ip, target_port)
@@ -100,6 +100,9 @@ class ESP8266:
                 "Content-Type: application/json",
                 f"Content-Length: {str(len(payload))}"
             ]
+
+            for header_key in headers:
+                request_header.append(f"{header_key}: {headers.get(header_key)}")
 
             request_header = "\r\n".join(request_header)
             request_body = f"{payload}\r\n\r\n"
